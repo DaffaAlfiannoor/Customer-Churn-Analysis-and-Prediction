@@ -10,6 +10,7 @@ Analisis end-to-end dan model machine learning untuk memprediksi *customer churn
 - [Metodologi](#metodologi)
 - [Hasil Model](#hasil-model)
 - [Temuan Utama](#temuan-utama)
+- [Dashboard](#dashboard)
 - [Instalasi & Menjalankan Project](#instalasi--menjalankan-project)
 - [Struktur Repository](#struktur-repository)
 - [Keterbatasan](#keterbatasan)
@@ -20,6 +21,8 @@ Analisis end-to-end dan model machine learning untuk memprediksi *customer churn
 Churn pelanggan adalah salah satu masalah bisnis paling mahal bagi perusahaan berbasis langganan. Project ini membangun model klasifikasi untuk memprediksi probabilitas seorang pelanggan akan berhenti berlangganan (churn), sekaligus menjelaskan **mengapa** pelanggan tersebut berisiko — sehingga tim retensi dapat memprioritaskan intervensi berdasarkan data, bukan intuisi.
 
 Fokus project ini bukan hanya akurasi model, tetapi **proses analisis yang dapat dipertanggungjawabkan**: setiap keputusan pembersihan data, pemilihan fitur, pemilihan model, dan pemilihan threshold didokumentasikan beserta alasannya.
+
+Hasil analisis dan model disajikan dalam **dashboard Streamlit interaktif** (`app.py`). Dashboard membaca artefak yang disimpan notebook dan menyediakan tujuh tab — dari ringkasan KPI, eksplorasi segmen, performa model, interpretabilitas, segmentasi risiko, hingga form prediksi profil pelanggan baru.
 
 ## Dataset
 
@@ -35,7 +38,7 @@ Fokus project ini bukan hanya akurasi model, tetapi **proses analisis yang dapat
 
 ## Struktur Analisis
 
-Notebook (`prediction.ipynb`) disusun dalam 24 bagian berurutan:
+Notebook (`prediction.ipynb`) disusun dalam 24 bagian berurutan, ditutup satu sel tambahan (sel 25) untuk menyimpan artefak:
 
 | No | Bagian | Deskripsi |
 |----|--------|-----------|
@@ -58,6 +61,7 @@ Notebook (`prediction.ipynb`) disusun dalam 24 bagian berurutan:
 | 20 | Model Interpretability | Koefisien regresi + Permutation Importance |
 | 21 | Customer Risk Segmentation | Segmentasi pelanggan Low/Medium/High risk |
 | 22–24 | Business Insights, Limitations, Conclusion | Ringkasan temuan bisnis dan keterbatasan analisis |
+| 25 (sel akhir) | Export Artifacts | Simpan model final dan tabel analisis ke `artifacts/` untuk dashboard |
 
 ## Metodologi
 
@@ -91,12 +95,12 @@ Notebook (`prediction.ipynb`) disusun dalam 24 bagian berurutan:
 
 ## Hasil Model
 
-| Model | CV ROC-AUC | Keterangan |
-|---|---|---|
-| Gradient Boosting (tuned) | ~0.848 | Model terbaik, setara secara statistik dengan Logistic Regression |
-| Logistic Regression (tuned) | ~0.846 | Hampir menyamai model boosting — mengindikasikan sinyal churn bersifat aditif |
-| Random Forest | ~0.83–0.84 | Kompetitif |
-| Decision Tree | ~0.824 | Model termuda di antara 5 kandidat |
+| Model | CV ROC-AUC | Test ROC-AUC | Keterangan |
+|---|---|---|---|
+| Gradient Boosting (tuned) | ~0.848 | ~0.843 | Model terbaik, setara secara statistik dengan Logistic Regression |
+| Logistic Regression (tuned) | ~0.846 | ~0.842 | Hampir menyamai model boosting — mengindikasikan sinyal churn bersifat aditif |
+| Random Forest | ~0.842 | ~0.839 | Kompetitif |
+| Decision Tree | ~0.824 | ~0.835 | Model termuda di antara 5 kandidat |
 
 Perbedaan performa antar model **lebih kecil dari variasi antar-fold**, sehingga pemilihan algoritma dinilai kurang berpengaruh dibandingkan kualitas fitur yang tersedia.
 
@@ -117,16 +121,43 @@ Perbedaan performa antar model **lebih kecil dari variasi antar-fold**, sehingga
 
 **Segmentasi risiko**: Pelanggan pada set uji dikelompokkan menjadi Low/Medium/High risk berdasarkan probabilitas prediksi, memungkinkan tim retensi memprioritaskan *outreach* pada segmen High-risk yang secara disproporsional menampung sebagian besar pelanggan yang benar-benar churn.
 
+## Dashboard
+
+Dashboard dibangun dengan **Streamlit** (`app.py`) dan menyajikan hasil notebook secara interaktif. Sumber datanya adalah `Telco-Customer-Churn.csv` (untuk chart eksplorasi) serta artefak `artifacts/churn_model.pkl` dan `artifacts/tables.pkl` (model final dan tabel analisis). Model dan data di-cache sehingga perpindahan tab tidak melatih ulang model.
+
+Dashboard terdiri dari tujuh tab:
+
+| Tab | Isi |
+|-----|-----|
+| **Overview** | KPI ringkas: total pelanggan, churn rate, ROC-AUC model, threshold keputusan; pie dan bar distribusi churn |
+| **Analisis** | Churn rate per variabel kategorikal, heatmap `Contract × InternetService`, boxplot `tenure` dan `MonthlyCharges` terhadap churn, churn rate per kelompok tenure |
+| **Statistik** | Heatmap korelasi Pearson (fitur numerik + churn) dan ranking Cramer's V dengan penanda signifikansi |
+| **Performa Model** | Tabel perbandingan 5 model, kurva ROC & Precision-Recall, kurva trade-off precision/recall/F1 terhadap threshold |
+| **Interpretasi** | Koefisien Logistic Regression dan permutation importance fitur |
+| **Risiko** | Tabel segmen Low/Medium/High, kalibrasi probabilitas prediksi vs churn aktual, karakteristik dan bauran kontrak per segmen |
+| **Prediksi** | Form input profil pelanggan yang menghasilkan probabilitas churn, kelas prediksi, dan segmen risiko |
+
+Dashboard memakai **threshold 0,35** (nilai F1-optimal dari Bagian 17 notebook) dan batas segmen risiko yang sama seperti Bagian 21: `< 0,30` Low, `0,30–0,60` Medium, `≥ 0,60` High.
+
 ## Instalasi & Menjalankan Project
 
 ### Prasyarat
-- Python 3.9+
-- Jupyter Notebook / JupyterLab
+- Python 3.10+ (notebook dikembangkan pada Python 3.10)
+- Jupyter Notebook / JupyterLab untuk menjalankan notebook
+- Streamlit untuk dashboard
 
 ### Instalasi Dependensi
 
+`requirements.txt` mencakup dependensi notebook maupun dashboard (numpy, pandas, scipy, scikit-learn, matplotlib, seaborn, plotly, streamlit, joblib):
+
 ```bash
-pip install numpy pandas scipy matplotlib seaborn scikit-learn jupyter
+pip install -r requirements.txt
+```
+
+Untuk menjalankan notebook saja, `jupyter` juga perlu terpasang:
+
+```bash
+pip install jupyter
 ```
 
 ### Menjalankan Notebook
@@ -139,14 +170,30 @@ jupyter notebook prediction.ipynb
 
 Pastikan file `Telco-Customer-Churn.csv` berada di direktori yang sama dengan notebook sebelum menjalankan sel `pd.read_csv(...)`.
 
+### Menjalankan Dashboard
+
+Dashboard membaca model dan tabel analisis dari folder `artifacts/`. Jalankan seluruh sel notebook terlebih dahulu — sel terakhir akan menyimpan `artifacts/churn_model.pkl` dan `artifacts/tables.pkl` — lalu:
+
+```bash
+streamlit run app.py
+```
+
+Jika `artifacts/` belum ada, dashboard menampilkan pesan untuk menjalankan notebook sampai selesai sebelum halaman dimuat ulang. Rincian tiap tab ada di bagian [Dashboard](#dashboard).
+
 ## Struktur Repository
 
 ```
 .
 ├── prediction.ipynb           # Notebook analisis dan pemodelan end-to-end
+├── app.py                     # Dashboard Streamlit (7 tab)
+├── requirements.txt           # Dependensi notebook & dashboard
+├── .gitignore                 # Mengabaikan artifacts/, __pycache__, dsb.
 ├── Telco-Customer-Churn.csv   # Dataset (tidak disertakan, harus disiapkan terpisah)
+├── artifacts/                 # Model & tabel hasil notebook (di-generate, di-ignore git)
 └── README.md                  # Dokumentasi project ini
 ```
+
+Folder `artifacts/` tidak di-commit karena dibangkitkan ulang setiap kali notebook dijalankan sampai selesai.
 
 ## Keterbatasan
 
@@ -154,6 +201,7 @@ Pastikan file `Telco-Customer-Churn.csv` berada di direktori yang sama dengan no
 - **Variabel kontekstual yang hilang** — tidak tersedia data tiket dukungan, keluhan, gangguan jaringan, atau penawaran kompetitor yang kemungkinan besar menjelaskan sisa error model.
 - **Data cross-sectional** — setiap pelanggan hanya diobservasi sekali, sehingga *time-to-churn* dan tren musiman tidak dapat dimodelkan.
 - **Concept drift** — performa model berpotensi menurun seiring waktu karena perubahan perilaku pelanggan, harga, dan kompetisi pasar; diperlukan monitoring berkala jika dipakai di produksi.
+- **Dashboard bersifat demonstrasi** — tab performa dan risiko memakai ulang split uji yang sama dengan notebook (80/20, `random_state=42`), bukan data produksi baru, sehingga angka yang ditampilkan menggambarkan performa pada set uji tersebut.
 
 ## Lisensi
 
