@@ -13,7 +13,6 @@ Analisis end-to-end dan model machine learning untuk memprediksi *customer churn
 - [Instalasi & Menjalankan Project](#instalasi--menjalankan-project)
 - [Struktur Repository](#struktur-repository)
 - [Keterbatasan](#keterbatasan)
-- [Lisensi](#lisensi)
 
 ## Ringkasan Project
 
@@ -154,7 +153,3 @@ Pastikan file `Telco-Customer-Churn.csv` berada di direktori yang sama dengan no
 - **Variabel kontekstual yang hilang** — tidak tersedia data tiket dukungan, keluhan, gangguan jaringan, atau penawaran kompetitor yang kemungkinan besar menjelaskan sisa error model.
 - **Data cross-sectional** — setiap pelanggan hanya diobservasi sekali, sehingga *time-to-churn* dan tren musiman tidak dapat dimodelkan.
 - **Concept drift** — performa model berpotensi menurun seiring waktu karena perubahan perilaku pelanggan, harga, dan kompetisi pasar; diperlukan monitoring berkala jika dipakai di produksi.
-
-## Lisensi
-
-Project ini dibuat untuk tujuan edukasi dan portofolio analisis data. Silakan sesuaikan lisensi sesuai kebutuhan penggunaan.
